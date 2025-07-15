@@ -37,5 +37,3 @@ let tokenize str =
   in
 
   aux 0 []
-
-
