@@ -34,11 +34,12 @@ let parse tokens =
 
   and parse_atom tokens =
     let is_var_token tok =
-      let first = tok.[0] in
-      (Char.code first >= Char.code 'A' && Char.code first <= Char.code 'Z') ||
-      (Char.code first >= Char.code 'a' && Char.code first <= Char.code 'z') ||
-      (Char.code first >= Char.code '0' && Char.code first <= Char.code '9') ||
-      first = '_'
+      if String.length tok = 0 then
+        false
+      else
+        match tok.[0] with
+        | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> true
+        | _ -> false
     in
     match tokens with
     | "(" :: rest ->
