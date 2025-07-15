@@ -73,181 +73,160 @@ let test name f =
     assert (equal_list (tokenize "~(X | Y) & Z") ["~"; "("; "X"; "|"; "Y"; ")"; "&"; "Z"])
   );
 
-  test "var with underscores" (fun () ->
-    assert (equal_list (tokenize "x_1 -> Y2") ["x_1"; "->"; "Y2"])
-  );
-
-  test "whitespace skipping" (fun () ->
-    assert (equal_list (tokenize "  A \t\n &\n B ") ["A"; "&"; "B"])
-  );
-
-  test "invalid char" (fun () ->
-    try
-      let _ = tokenize "A $ B" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '$')
-  );
-
-  test "empty input" (fun () ->
-    assert (equal_list (tokenize "") [])
-  );
-
-  test "only whitespace" (fun () ->
-    assert (equal_list (tokenize "   \t\n  ") [])
-  );
-
-  test "digit-only identifier" (fun () ->
-    assert (equal_list (tokenize "12345") ["12345"])
-  );
-  test "underscore-leading identifier" (fun () ->
-    assert (equal_list (tokenize "_foo_bar") ["_foo_bar"])
-  );
-
-  test "no spaces around arrow/not" (fun () ->
-    assert (equal_list (tokenize "~X->Y") ["~"; "X"; "->"; "Y"])
-  );
-
-  test "chained implications" (fun () ->
-    assert (equal_list (tokenize "A->B->C") ["A"; "->"; "B"; "->"; "C"])
-  );
-
-  test "OR without spaces" (fun () ->
-    assert (equal_list (tokenize "A|B") ["A"; "|"; "B"])
-  );
-
-  test "double OR" (fun () ->
-    assert (equal_list (tokenize "A||B") ["A"; "|"; "|"; "B"])
-  );
-
-  test "single paren" (fun () ->
-    assert (equal_list (tokenize "(") ["("])
-  );
-
-  test "mixed parens" (fun () ->
-    assert (equal_list (tokenize "((A))") ["("; "("; "A"; ")"; ")"])
-  );
-
-  test "single dash error" (fun () ->
-    try
-      let _ = tokenize "A - B" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '-')
-  );
-
-  test "invalid symbol" (fun () ->
-    try
-      let _ = tokenize "foo @ bar" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '@')
-  );
-
-  test "implication" (fun () ->
-    assert (equal_list (tokenize "A -> B") ["A"; "->"; "B"])
-  );
-
-  test "nested parens" (fun () ->
-    assert (equal_list (tokenize "(X & Y) -> Z") ["("; "X"; "&"; "Y"; ")"; "->"; "Z"])
-  );
-
-  test "not operator" (fun () ->
-    assert (equal_list (tokenize "~X") ["~"; "X"])
-  );
-
-  test "complex expr" (fun () ->
-    assert (equal_list (tokenize "~(X | Y) & Z") ["~"; "("; "X"; "|"; "Y"; ")"; "&"; "Z"])
-  );
-
-  test "var with underscores" (fun () ->
-    assert (equal_list (tokenize "x_1 -> Y2") ["x_1"; "->"; "Y2"])
-  );
-
-  test "whitespace skipping" (fun () ->
-    assert (equal_list (tokenize "  A \t\n &\n B ") ["A"; "&"; "B"])
-  );
-
-  test "invalid char" (fun () ->
-    try
-      let _ = tokenize "A $ B" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '$')
-  );
-
-  test "empty input" (fun () ->
-    assert (equal_list (tokenize "") [])
-  );
-
-  test "only whitespace" (fun () ->
-    assert (equal_list (tokenize "   \t\n  ") [])
-  );
-
-  test "digit-only identifier" (fun () ->
-    assert (equal_list (tokenize "12345") ["12345"])
-  );
-  test "underscore-leading identifier" (fun () ->
-    assert (equal_list (tokenize "_foo_bar") ["_foo_bar"])
-  );
-
-  test "no spaces around arrow/not" (fun () ->
-    assert (equal_list (tokenize "~X->Y") ["~"; "X"; "->"; "Y"])
-  );
-
-  test "chained implications" (fun () ->
-    assert (equal_list (tokenize "A->B->C") ["A"; "->"; "B"; "->"; "C"])
-  );
-
-  test "OR without spaces" (fun () ->
-    assert (equal_list (tokenize "A|B") ["A"; "|"; "B"])
-  );
-
-  test "double OR" (fun () ->
-    assert (equal_list (tokenize "A||B") ["A"; "|"; "|"; "B"])
-  );
-
-  test "single paren" (fun () ->
-    assert (equal_list (tokenize "(") ["("])
-  );
-
-  test "mixed parens" (fun () ->
-    assert (equal_list (tokenize "((A))") ["("; "("; "A"; ")"; ")"])
-  );
-
-  test "single dash error" (fun () ->
-    try
-      let _ = tokenize "A - B" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '-')
-  );
-
-  test "invalid symbol" (fun () ->
-    try
-      let _ = tokenize "foo @ bar" in
-      assert false
-    with Failure msg ->
-      assert (String.contains msg '@')
-  );
-
-  test "parse simple implication" (fun () ->
-    let ast = parse ["A"; "->"; "B"] in
-    match ast with
-    | Imp (Var "A", Var "B") -> ()
-    | _ -> failwith "Incorrect AST"
-  );
-
-  test "parse nested precedence" (fun () ->
-  let ast = parse ["~"; "A"; "&"; "B"; "->"; "C"] in
-  match ast with
-  | Imp (
+  test "complex expr parse" (fun () ->
+    let ast = parse (tokenize "~(X | Y) & Z") in
+    assert (equal_formula ast (
       And (
-        Not (Var "A"),
-        Var "B"
-      ),
-      Var "C"
-    ) -> ()
-  | _ -> failwith "Incorrect AST structure"
-);
+        Not (Or (Var "X", Var "Y")),
+        Var "Z"
+      )
+    ))
+  );
+
+  test "var with underscores" (fun () ->
+    assert (equal_list (tokenize "x_1 -> Y2") ["x_1"; "->"; "Y2"])
+  );
+
+  test "var with underscores parse" (fun () ->
+    let ast = parse (tokenize "x_1 -> Y2") in
+    assert (equal_formula ast (Imp (Var "x_1", Var "Y2")))
+  );
+
+  test "whitespace skipping" (fun () ->
+    assert (equal_list (tokenize "  A \t\n &\n B ") ["A"; "&"; "B"])
+  );
+
+  test "whitespace skipping parse" (fun () ->
+    let ast = parse (tokenize "  A \t\n &\n B ") in
+    assert (equal_formula ast (And (Var "A", Var "B")))
+  );
+
+  test "invalid char" (fun () ->
+    try
+      let _ = tokenize "A $ B" in
+      assert false
+    with Failure msg ->
+      assert (String.contains msg '$')
+  );
+
+  test "empty input" (fun () ->
+    assert (equal_list (tokenize "") [])
+  );
+
+  test "empty input parse" (fun () ->
+    try
+      let _ = parse (tokenize "") in
+      assert false
+    with Failure _ -> ()
+  );
+
+
+  test "only whitespace" (fun () ->
+    assert (equal_list (tokenize "   \t\n  ") [])
+  );
+
+  test "only whitespace parse" (fun () ->
+    try
+      let _ = parse (tokenize "   \t\n  ") in
+      assert false
+    with Failure _ -> ()
+  );
+
+  test "digit-only identifier" (fun () ->
+    assert (equal_list (tokenize "12345") ["12345"])
+  );
+
+  test "digit-only identifier parse" (fun () ->
+    let ast = parse (tokenize "12345") in
+    assert (equal_formula ast (Var "12345"))
+  );
+
+  test "underscore-leading identifier" (fun () ->
+    assert (equal_list (tokenize "_foo_bar") ["_foo_bar"])
+  );
+
+  test "underscore-leading identifier parse" (fun () ->
+    let ast = parse (tokenize "_foo_bar") in
+    assert (equal_formula ast (Var "_foo_bar"))
+  );
+
+  test "no spaces around arrow/not" (fun () ->
+    assert (equal_list (tokenize "~X->Y") ["~"; "X"; "->"; "Y"])
+  );
+
+  test "no spaces around arrow/not parse" (fun () ->
+    let ast = parse (tokenize "~X->Y") in
+    assert (equal_formula ast (
+      Imp (Not (Var "X"), Var "Y")
+    ))
+  );
+
+  test "chained implications" (fun () ->
+    assert (equal_list (tokenize "A->B->C") ["A"; "->"; "B"; "->"; "C"])
+  );
+
+  test "chained implications parse" (fun () ->
+    let ast = parse (tokenize "A->B->C") in
+    assert (equal_formula ast (
+      Imp (Var "A", Imp (Var "B", Var "C"))
+    ))
+  );
+
+  test "OR without spaces" (fun () ->
+    assert (equal_list (tokenize "A|B") ["A"; "|"; "B"])
+  );
+
+  test "OR without spaces parse" (fun () ->
+    let ast = parse (tokenize "A|B") in
+    assert (equal_formula ast (Or (Var "A", Var "B")))
+  );
+
+  test "double OR" (fun () ->
+    assert (equal_list (tokenize "A||B") ["A"; "|"; "|"; "B"])
+  );
+
+test "double OR parse" (fun () ->
+    try
+      let _ = parse (tokenize "A||B") in
+      assert false
+    with Failure _ -> ()
+  );
+
+  test "single paren" (fun () ->
+    assert (equal_list (tokenize "(") ["("])
+  );
+
+  test "single paren parse" (fun () ->
+    try
+      let _ = parse (tokenize "(") in
+      assert false
+    with Failure _ -> ()
+  );
+
+
+  test "mixed parens" (fun () ->
+    assert (equal_list (tokenize "((A))") ["("; "("; "A"; ")"; ")"])
+  );
+
+  test "mixed parens parse" (fun () ->
+    let ast = parse (tokenize "((A))") in
+    assert (equal_formula ast (Var "A"))
+  );
+
+  test "single dash error" (fun () ->
+    try
+      let _ = tokenize "A - B" in
+      assert false
+    with Failure msg ->
+      assert (String.contains msg '-')
+  );
+
+  test "invalid symbol" (fun () ->
+    try
+      let _ = tokenize "foo @ bar" in
+      assert false
+    with Failure msg ->
+      assert (String.contains msg '@')
+  );
+
 
