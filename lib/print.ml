@@ -15,13 +15,13 @@ let rec all_assignments vars =
       ]
 
 let rec eval f env =
-  let lookup x = List.assoc x env in
   match f with
-  | Formula.Var x -> lookup x
+  | Formula.Var x -> List.assoc x env
   | Formula.Not f -> not (eval f env)
   | Formula.And (f1, f2) -> eval f1 env && eval f2 env
   | Formula.Or  (f1, f2) -> eval f1 env || eval f2 env
   | Formula.Imp (f1, f2) -> not (eval f1 env) || eval f2 env
+
 
 let print_truth_table f =
   let vars = vars_of_formula f in
